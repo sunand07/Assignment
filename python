@@ -1,0 +1,34 @@
+from flask import Flask, render_template, request
+import pymongo
+
+app = Flask(__name__)
+
+# Connect to MongoDB database
+client = pymongo.MongoClient("mongodb://mongo:27017")
+db = client["appdb"]
+collection = db["data"]
+
+# Frontend UI
+@app.route("/")
+def index():
+    data = collection.find()
+    return render_template("index.html", data=data)
+
+# API endpoint to fetch data
+@app.route("/api/data")
+def get_data():
+    data = collection.find()
+    data_list = []
+    for document in data:
+        data_list.append(document)
+    return jsonify(data_list)
+
+# API endpoint to store data
+@app.route("/api/data", methods=["POST"])
+def post_data():
+    data = request.get_json()
+    collection.insert_one(data)
+    return jsonify({"message": "Data stored successfully"})
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=80)
